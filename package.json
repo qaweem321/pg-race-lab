@@ -1,0 +1,30 @@
+{
+  "name": "pg-race-lab",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Step through two Postgres transactions and watch race conditions happen, then fixed. Runs in the browser.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "check": "npm test && npm run build",
+    "verify:postgres": "vitest run --config vitest.postgres.config.ts"
+  },
+  "dependencies": {
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.1",
+    "typescript": "7.0.2",
+    "vite": "8.3.1",
+    "vitest": "5.0.2",
+    "pg": "8.23.0",
+    "@types/pg": "8.23.1"
+  }
+}
