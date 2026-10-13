@@ -65,4 +65,44 @@ describe("READ COMMITTED model", () => {
     db.commit(t1);
     expect(() => db.insert(t2, "t", { id: "b", n: 2 })).toThrow(UniqueViolation);
   });
+
+  test("an insert waits for a transaction deleting the same key, then succeeds if the delete commits", () => {
+    const { db, t1, t2 } = setup();
+    db.delete(t1, db.snapshot(t1), "t", (r) => r.id === "a");
+    expect(() => db.insert(t2, "t", { id: "a", n: 2 })).toThrow(Blocked);
+    db.commit(t1);
+    db.insert(t2, "t", { id: "a", n: 2 });
+    db.commit(t2);
+    expect(db.committedRows("t")).toEqual([{ id: "a", n: 2 }]);
+  });
+
+  test("an insert waits for a deleting transaction, then fails if it rolls back", () => {
+    const { db, t1, t2 } = setup();
+    db.delete(t1, db.snapshot(t1), "t", (r) => r.id === "a");
+    expect(() => db.insert(t2, "t", { id: "a", n: 2 })).toThrow(Blocked);
+    db.rollback(t1);
+    expect(() => db.insert(t2, "t", { id: "a", n: 2 })).toThrow(UniqueViolation);
+  });
+
+  test("an insert waits for a transaction updating the same key, then fails", () => {
+    const { db, t1, t2 } = setup();
+    db.update(t1, db.snapshot(t1), "t", () => true, () => ({ n: 5 }));
+    expect(() => db.insert(t2, "t", { id: "a", n: 2 })).toThrow(Blocked);
+    db.commit(t1);
+    expect(() => db.insert(t2, "t", { id: "a", n: 2 })).toThrow(UniqueViolation);
+  });
+
+  test("a transaction can delete a key and insert it again", () => {
+    const { db, t1 } = setup();
+    db.delete(t1, db.snapshot(t1), "t", (r) => r.id === "a");
+    db.insert(t1, "t", { id: "a", n: 7 });
+    db.commit(t1);
+    expect(db.committedRows("t")).toEqual([{ id: "a", n: 7 }]);
+  });
+
+  test("but not insert a key it only updated", () => {
+    const { db, t1 } = setup();
+    db.update(t1, db.snapshot(t1), "t", () => true, () => ({ n: 5 }));
+    expect(() => db.insert(t1, "t", { id: "a", n: 7 })).toThrow(UniqueViolation);
+  });
 });

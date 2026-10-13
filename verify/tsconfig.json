@@ -1,0 +1,9 @@
+{
+  // The real-Postgres check runs in Node, not the browser: typed against Node, checked by `npm run build`.
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2022"],
+    "types": ["node"]
+  },
+  "include": ["."]
+}

@@ -303,7 +303,7 @@ function countRedemptions(): Step {
 function checkLimit(): Step {
   return {
     kind: "app",
-    code: "if (used >= coupon.max_uses) throw new Error('Used up');",
+    code: "if (used >= 1) throw new Error('Used up'); // max_uses is 1",
     run: ({ vars }) => {
       if (Number(vars.used) >= 1) throw new AppError("Refused: the coupon is used up.");
       return "Under the limit, so it redeems.";
@@ -325,7 +325,7 @@ function redeem(customer: string): Step {
 function lockCoupon(): Step {
   return {
     kind: "sql",
-    code: "SELECT max_uses FROM coupons\nWHERE code = 'LAUNCH' FOR UPDATE;",
+    code: "SELECT id FROM coupons\nWHERE id = 'LAUNCH' FOR UPDATE;",
     run: ({ db, tx, snap }) => {
       db.lockRows(tx, snap, "coupons", (r) => r.id === "LAUNCH");
       return "Locked the coupon until this transaction ends.";

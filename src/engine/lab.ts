@@ -12,6 +12,9 @@ export type StepContext = {
   vars: Vars;
 };
 
+// A step that has to wait runs again from its start when it resumes (a write that waits throws
+// Blocked before changing anything). So a "sql" step makes at most one write: a second one would
+// be applied twice.
 export type Step =
   | { kind: "sql"; code: string; run: (ctx: StepContext) => string }
   // Application code between queries (the "if" that decides what to do next). Throwing an

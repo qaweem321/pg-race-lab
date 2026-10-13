@@ -3,7 +3,7 @@ import type { Session } from "../engine/lab";
 type Props = {
   session: Session;
   index: number;
-  otherName: string;
+  waitingForName: string;
   onStep: () => void;
   disabled: boolean;
 };
@@ -15,7 +15,7 @@ const STATE_LABEL: Record<Session["state"], string> = {
   "rolled back": "rolled back",
 };
 
-export function TransactionColumn({ session, index, otherName, onStep, disabled }: Props) {
+export function TransactionColumn({ session, index, waitingForName, onStep, disabled }: Props) {
   const done = session.state === "committed" || session.state === "rolled back";
   return (
     <section className={`panel tx tx-${index}`} aria-label={`Transaction ${session.name}`}>
@@ -24,7 +24,7 @@ export function TransactionColumn({ session, index, otherName, onStep, disabled 
           <span className="dot" aria-hidden="true" /> {session.name}
         </h2>
         <span className={`badge state-${session.state.replace(" ", "-")}`}>
-          {session.state === "waiting" ? `waiting for ${otherName}` : STATE_LABEL[session.state]}
+          {session.state === "waiting" ? `waiting for ${waitingForName}` : STATE_LABEL[session.state]}
         </span>
       </div>
       <ol className="steps">

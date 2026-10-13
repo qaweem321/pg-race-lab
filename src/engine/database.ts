@@ -126,14 +126,20 @@ export class Database {
     return targets.length;
   }
 
+  // The unique check looks at every version of the key, like Postgres's index check: a version
+  // another transaction is still creating or removing makes the insert wait for it to end, then
+  // look again (the waiting statement is run again).
   insert(tx: Tx, table: string, values: Values) {
     const key = String(values.id);
     for (const v of this.versions) {
       if (v.table !== table || v.key !== key || this.tx(v.xmin).status === "aborted") continue;
       const creator = this.tx(v.xmin);
       if (creator.status === "active" && creator.id !== tx.id) throw new Blocked(creator.id, table, key);
-      const deletedBy = v.xmax === null ? null : this.tx(v.xmax);
-      if (!deletedBy || deletedBy.status !== "committed") throw new UniqueViolation(table, key);
+      if (v.xmax === null) throw new UniqueViolation(table, key);
+      if (v.xmax === tx.id) continue; // this transaction deleted or replaced it (a replacement is its own version)
+      const remover = this.tx(v.xmax);
+      if (remover.status === "active") throw new Blocked(remover.id, table, key);
+      if (remover.status !== "committed") throw new UniqueViolation(table, key);
     }
     this.versions.push(this.newVersion(table, values, tx.id));
   }

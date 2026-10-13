@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Lab } from "../engine/lab";
 import { type Scenario, scenarios, setupFor } from "../scenarios";
 import { Outcome } from "./Outcome";
@@ -17,20 +17,21 @@ function readHash(): { scenario: Scenario; variant: Variant } {
   };
 }
 
+type Choice = { scenario: Scenario; variant: Variant };
+
+// The lab is changed in place by each step, so it lives in state (useMemo may drop it), always
+// rebuilt together with the choice it belongs to.
+const withLab = (choice: Choice) => ({ ...choice, lab: new Lab(setupFor(choice.scenario, choice.variant)) });
+
 export function App() {
-  const [{ scenario, variant }, setChoice] = useState(readHash);
-  const [run, setRun] = useState(0); // a new number makes a new lab (Reset)
+  const [{ scenario, variant, lab }, setState] = useState(() => withLab(readHash()));
   const [, setTick] = useState(0); // re-render after a step changes the lab
   const [playing, setPlaying] = useState(false);
-  const lab = useMemo(
-    () => new Lab(setupFor(scenario, variant)),
-    // `run` is only here to rebuild the lab on Reset.
-    [scenario, variant, run],
-  );
+  const newLab = () => setState((current) => withLab(current));
   const queue = useRef<number[]>([]);
 
   useEffect(() => {
-    const onHash = () => setChoice(readHash());
+    const onHash = () => setState(withLab(readHash()));
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
@@ -59,20 +60,19 @@ export function App() {
     return () => window.clearTimeout(timer);
   });
 
-  const choose = (next: Partial<{ scenario: Scenario; variant: Variant }>) =>
-    setChoice((current) => ({ ...current, ...next }));
+  const choose = (next: Partial<Choice>) => setState((current) => withLab({ ...current, ...next }));
 
   const reset = () => {
     setPlaying(false);
     queue.current = [];
-    setRun((r) => r + 1);
+    newLab();
   };
 
   const play = () => {
     if (lab.finished || lab.log.length > 0) {
       // Start over so the race plays from the beginning.
       queue.current = [...scenario.dangerousOrder];
-      setRun((r) => r + 1);
+      newLab();
     } else {
       queue.current = [...scenario.dangerousOrder];
     }
@@ -156,7 +156,7 @@ export function App() {
             key={session.name}
             session={session}
             index={index}
-            otherName={lab.sessions[1 - index]?.name ?? ""}
+            waitingForName={session.waitingFor === null ? "" : lab.db.tx(session.waitingFor).name}
             onStep={() => stepSession(index)}
             disabled={playing}
           />
