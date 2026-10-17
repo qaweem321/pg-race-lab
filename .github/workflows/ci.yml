@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:17
+        image: postgres:17.11-alpine3.24
         env:
           POSTGRES_PASSWORD: postgres
         ports: ["5432:5432"]

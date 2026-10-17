@@ -59,7 +59,9 @@ npm test               # model tests + every interleaving
 npm run build          # type check + production build
 
 # compare with a real Postgres (creates and drops a throwaway schema)
-DATABASE_URL=postgres://user:pass@localhost:5432/db npm run verify:postgres
+docker compose up -d   # Postgres 17, the version CI uses; or use your own DATABASE_URL
+DATABASE_URL=postgres://lab:lab@localhost:5439/lab npm run verify:postgres
+docker compose down
 ```
 
 ## Add a scenario
