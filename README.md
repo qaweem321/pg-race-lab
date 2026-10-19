@@ -53,7 +53,7 @@ Not modelled: other isolation levels, deadlock detection, predicate locks and `S
 ## Run it locally
 
 ```bash
-npm install
+npm ci
 npm run dev            # the lab at http://localhost:5173/pg-race-lab/
 npm test               # model tests + every interleaving
 npm run build          # type check + production build
