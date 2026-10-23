@@ -60,13 +60,15 @@ export function App() {
     return () => window.clearTimeout(timer);
   });
 
-  const choose = (next: Partial<Choice>) => setState((current) => withLab({ ...current, ...next }));
-
-  const reset = () => {
+  // Any new lab stops a running play, even when the scenario and version stay the same (clicking
+  // the active tab): the rest of the queue belongs to the old lab.
+  const choose = (next: Partial<Choice>) => {
     setPlaying(false);
     queue.current = [];
-    newLab();
+    setState((current) => withLab({ ...current, ...next }));
   };
+
+  const reset = () => choose({});
 
   const play = () => {
     if (lab.finished || lab.log.length > 0) {
@@ -100,86 +102,88 @@ export function App() {
         </p>
       </header>
 
-      <nav className="tabs" aria-label="Scenarios">
-        {scenarios.map((s) => (
-          <button
-            key={s.id}
-            type="button"
-            className={s.id === scenario.id ? "tab active" : "tab"}
-            aria-pressed={s.id === scenario.id}
-            onClick={() => choose({ scenario: s })}
-          >
-            {s.title}
-          </button>
-        ))}
-      </nav>
-
-      <section className="story">
-        <p>{scenario.story}</p>
-        <p className="invariant">
-          <strong>Must always hold:</strong> {scenario.invariant}
-        </p>
-      </section>
-
-      <div className="toolbar">
-        <div className="segmented" role="group" aria-label="Version">
-          {(["broken", "fixed"] as const).map((v) => (
+      <main>
+        <nav className="tabs" aria-label="Scenarios">
+          {scenarios.map((s) => (
             <button
-              key={v}
+              key={s.id}
               type="button"
-              className={v === variant ? `seg active ${v}` : "seg"}
-              aria-pressed={v === variant}
-              onClick={() => choose({ variant: v })}
+              className={s.id === scenario.id ? "tab active" : "tab"}
+              aria-pressed={s.id === scenario.id}
+              onClick={() => choose({ scenario: s })}
             >
-              {v === "broken" ? "Broken" : "Fixed"}: {scenario[v].title}
+              {s.title}
             </button>
           ))}
-        </div>
-        <div className="actions">
-          <button type="button" className="primary" onClick={play} disabled={playing}>
-            {playing ? "Playing..." : "▶ Play the race"}
-          </button>
-          <button type="button" onClick={reset}>
-            Reset
-          </button>
-        </div>
-      </div>
+        </nav>
 
-      <p className="explanation">{details.explanation}</p>
-
-      {outcome && <Outcome outcome={outcome} variant={variant} onSwitch={() => choose({ variant: variant === "broken" ? "fixed" : "broken" })} />}
-      {lab.stuck && <p className="stuck">Both transactions wait for each other: a deadlock.</p>}
-
-      <div className="columns">
-        {lab.sessions.map((session, index) => (
-          <TransactionColumn
-            key={session.name}
-            session={session}
-            index={index}
-            waitingForName={session.waitingFor === null ? "" : lab.db.tx(session.waitingFor).name}
-            onStep={() => stepSession(index)}
-            disabled={playing}
-          />
-        ))}
-      </div>
-
-      <div className="bottom">
-        <TablesView db={lab.db} tables={scenario.tables} sessions={lab.sessions} />
-        <section className="panel log" aria-label="What happened">
-          <h2>What happened</h2>
-          {lab.log.length === 0 ? (
-            <p className="muted">Press “Play the race”, or run the steps yourself in any order.</p>
-          ) : (
-            <ol>
-              {lab.log.map((entry, i) => (
-                <li key={i} className={`log-${entry.tone}`}>
-                  <span className="who">{entry.session}</span> {entry.text}
-                </li>
-              ))}
-            </ol>
-          )}
+        <section className="story">
+          <p>{scenario.story}</p>
+          <p className="invariant">
+            <strong>Must always hold:</strong> {scenario.invariant}
+          </p>
         </section>
-      </div>
+
+        <div className="toolbar">
+          <div className="segmented" role="group" aria-label="Version">
+            {(["broken", "fixed"] as const).map((v) => (
+              <button
+                key={v}
+                type="button"
+                className={v === variant ? `seg active ${v}` : "seg"}
+                aria-pressed={v === variant}
+                onClick={() => choose({ variant: v })}
+              >
+                {v === "broken" ? "Broken" : "Fixed"}: {scenario[v].title}
+              </button>
+            ))}
+          </div>
+          <div className="actions">
+            <button type="button" className="primary" onClick={play} disabled={playing}>
+              {playing ? "Playing..." : "▶ Play the race"}
+            </button>
+            <button type="button" onClick={reset}>
+              Reset
+            </button>
+          </div>
+        </div>
+
+        <p className="explanation">{details.explanation}</p>
+
+        {outcome && <Outcome outcome={outcome} variant={variant} onSwitch={() => choose({ variant: variant === "broken" ? "fixed" : "broken" })} />}
+        {lab.stuck && <p className="stuck">Both transactions wait for each other: a deadlock.</p>}
+
+        <div className="columns">
+          {lab.sessions.map((session, index) => (
+            <TransactionColumn
+              key={session.name}
+              session={session}
+              index={index}
+              waitingForName={session.waitingFor === null ? "" : lab.db.tx(session.waitingFor).name}
+              onStep={() => stepSession(index)}
+              disabled={playing}
+            />
+          ))}
+        </div>
+
+        <div className="bottom">
+          <TablesView db={lab.db} tables={scenario.tables} sessions={lab.sessions} />
+          <section className="panel log" aria-label="What happened">
+            <h2>What happened</h2>
+            {lab.log.length === 0 ? (
+              <p className="muted">Press “Play the race”, or run the steps yourself in any order.</p>
+            ) : (
+              <ol>
+                {lab.log.map((entry, i) => (
+                  <li key={i} className={`log-${entry.tone}`}>
+                    <span className="who">{entry.session}</span> {entry.text}
+                  </li>
+                ))}
+              </ol>
+            )}
+          </section>
+        </div>
+      </main>
 
       <footer className="footer">
         <p>

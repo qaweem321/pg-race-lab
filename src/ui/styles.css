@@ -2,12 +2,12 @@
   --bg: #f8fafc;
   --panel: #ffffff;
   --text: #0f172a;
-  --muted: #64748b;
+  --muted: #475569;
   --border: #e2e8f0;
   --code-bg: #f1f5f9;
-  --accent: #0284c7;
+  --accent: #0369a1;
   --accent-text: #ffffff;
-  --t0: #2563eb;
+  --t0: #1d4ed8;
   --t0-soft: #dbeafe;
   --t1: #c2410c;
   --t1-soft: #ffedd5;
@@ -15,7 +15,7 @@
   --ok-soft: #dcfce7;
   --bad: #b91c1c;
   --bad-soft: #fee2e2;
-  --wait: #a16207;
+  --wait: #854d0e;
   --wait-soft: #fef9c3;
   color-scheme: light;
 }
@@ -312,7 +312,7 @@ pre {
 }
 
 .step.done {
-  opacity: 0.55;
+  opacity: 0.8;
 }
 
 .step.done pre::before,
